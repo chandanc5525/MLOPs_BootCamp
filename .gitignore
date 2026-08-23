@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Logs
+logs/
+
+# DVC-tracked data/artifacts stay OUT of git - DVC manages them via .dvc files
+data/raw/*.csv
+!data/raw/.gitkeep
+artifacts/
+
+# AutoGluon internal working dirs
+AutogluonModels/
+*.ag_model/
+
+# MLflow local tracking store
+mlruns/
+mlartifacts/
+
+# Env / secrets
+.env
+*.pem
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/

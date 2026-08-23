@@ -1,0 +1,112 @@
+# CI/CD pipeline - the top of the architecture diagram:
+#   GitHub -> GitHub Actions CI/CD -> (triggers Airflow-orchestrated DVC
+#   pipeline) -> Quality Gate -> build & push Docker image -> deploy.
+#
+# Split into 3 jobs so a lint/test failure never wastes time training a
+# model, and a training/quality-gate failure never produces a Docker image.
+
+name: MLOps CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: pytest tests/ -v
+
+  dvc-pipeline:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # In a real setup: `dvc pull` to fetch data/artifacts.dvc-tracked files
+      # from remote storage (S3/GCS/DagsHub) here, using secrets for creds.
+      # - name: DVC pull
+      #   run: dvc pull
+
+      - name: Reproduce DVC pipeline (data -> train -> evaluate)
+        run: dvc repro
+
+      - name: Enforce quality gate
+        run: |
+          python - << 'PY'
+          import json, sys
+          m = json.load(open("artifacts/model_evaluation/metrics.json"))
+          print("Metrics:", m)
+          if not m["quality_gate_passed"]:
+              print("Quality gate FAILED - blocking promotion to staging.")
+              sys.exit(1)
+          PY
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-pkl
+          path: artifacts/model_trainer/model.pkl
+
+      # - name: DVC push
+      #   run: dvc push
+
+  build-and-push-image:
+    needs: dvc-pipeline
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download model artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: model-pkl
+          path: artifacts/model_trainer/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/mlops-autogluon-airquality:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/mlops-autogluon-airquality:${{ github.sha }}
+
+      # Deployment step (server pull + restart, or k8s rollout) goes here -
+      # left as a placeholder since it depends on your infra (EC2/ECS/K8s).
+      # - name: Deploy to production
+      #   run: ./scripts/deploy.sh

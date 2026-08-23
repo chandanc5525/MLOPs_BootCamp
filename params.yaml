@@ -1,0 +1,16 @@
+# HOW training behaves. Change these to tune experiments - DVC will detect
+# the change and know model_trainer / model_evaluation need to re-run.
+
+data_transformation:
+  test_size: 0.2
+
+autogluon:
+  presets: "medium_quality"   # try: "best_quality" for max accuracy (slower)
+  time_limit: 120              # seconds; raise this for real training runs
+  eval_metric: "r2"
+
+quality_gate:
+  min_r2_threshold: 0.5
+
+mlflow:
+  tracking_uri: "file:./mlruns"   # point this at a remote MLflow server in prod

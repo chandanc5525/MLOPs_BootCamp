@@ -1,0 +1,74 @@
+# DVC Pipeline definition.
+#
+# Run the whole pipeline with:   dvc repro
+# Visualize the DAG with:        dvc dag
+#
+# Each stage declares:
+#   cmd  -> what to run
+#   deps -> inputs (code + upstream data). If none of these change, DVC
+#           SKIPS the stage on the next `dvc repro` (this is DVC's caching).
+#   params -> which params.yaml keys this stage's outputs depend on.
+#   outs -> outputs DVC tracks (content-hashed, cached, can be `dvc push`ed
+#           to remote storage like S3/GCS/Azure/DagsHub).
+#   metrics -> outs that are also plain-readable metrics (used by `dvc metrics show/diff`)
+
+stages:
+  data_ingestion:
+    cmd: python -m src.mlops_project.pipeline.stage_01_data_ingestion
+    deps:
+      - src/mlops_project/pipeline/stage_01_data_ingestion.py
+      - src/mlops_project/components/data_ingestion.py
+      - data/raw/air_quality.csv
+      - config/config.yaml
+    outs:
+      - artifacts/data_ingestion/raw_data.csv
+
+  data_validation:
+    cmd: python -m src.mlops_project.pipeline.stage_02_data_validation
+    deps:
+      - src/mlops_project/pipeline/stage_02_data_validation.py
+      - src/mlops_project/components/data_validation.py
+      - artifacts/data_ingestion/raw_data.csv
+      - schema.yaml
+    outs:
+      - artifacts/data_validation/status.txt
+
+  data_transformation:
+    cmd: python -m src.mlops_project.pipeline.stage_03_data_transformation
+    deps:
+      - src/mlops_project/pipeline/stage_03_data_transformation.py
+      - src/mlops_project/components/data_transformation.py
+      - artifacts/data_ingestion/raw_data.csv
+      - artifacts/data_validation/status.txt
+    params:
+      - data_transformation.test_size
+    outs:
+      - artifacts/data_transformation/train.csv
+      - artifacts/data_transformation/test.csv
+
+  model_trainer:
+    cmd: python -m src.mlops_project.pipeline.stage_04_model_trainer
+    deps:
+      - src/mlops_project/pipeline/stage_04_model_trainer.py
+      - src/mlops_project/components/model_trainer.py
+      - artifacts/data_transformation/train.csv
+    params:
+      - autogluon.presets
+      - autogluon.time_limit
+      - autogluon.eval_metric
+    outs:
+      - artifacts/model_trainer/model.pkl
+      - artifacts/model_trainer/autogluon_model
+
+  model_evaluation:
+    cmd: python -m src.mlops_project.pipeline.stage_05_model_evaluation
+    deps:
+      - src/mlops_project/pipeline/stage_05_model_evaluation.py
+      - src/mlops_project/components/model_evaluation.py
+      - artifacts/model_trainer/model.pkl
+      - artifacts/data_transformation/test.csv
+    params:
+      - quality_gate.min_r2_threshold
+    metrics:
+      - artifacts/model_evaluation/metrics.json:
+          cache: false

@@ -1,0 +1,25 @@
+
+COLUMNS:
+  PM2_5:
+    dtype: float64
+  PM10:
+    dtype: float64
+  NO2:
+    dtype: float64
+  SO2:
+    dtype: float64
+  CO:
+    dtype: float64
+  O3:
+    dtype: float64
+  Temperature:
+    dtype: float64
+  Humidity:
+    dtype: float64
+  WindSpeed:
+    dtype: float64
+  AQI:
+    dtype: float64
+
+TARGET_COLUMN:
+  name: AQI

@@ -1,0 +1,31 @@
+# Core pipeline
+pandas
+numpy
+scikit-learn
+pyyaml
+python-box==6.0.2
+
+# Modeling
+autogluon.tabular[all]
+
+# Experiment tracking / registry
+mlflow
+
+# Data + pipeline versioning
+dvc
+
+# Serving
+fastapi
+uvicorn[standard]
+pydantic
+
+# Orchestration (Airflow) - install separately in the Airflow image, see
+# notes/12_airflow_orchestration.md. Left here commented out because Airflow
+# has strict, often-conflicting dependency pins vs. the training stack.
+# apache-airflow==2.9.3
+
+# Testing
+pytest
+httpx
+
+-e .

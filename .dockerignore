@@ -1,0 +1,15 @@
+.git
+.github
+.dvc
+data
+notes
+tests
+logs
+mlruns
+*.md
+.gitignore
+.dockerignore
+__pycache__
+*.pyc
+.venv
+venv
