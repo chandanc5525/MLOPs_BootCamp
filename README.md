@@ -1,4 +1,5 @@
-# MLOps Bootcamp — Air Quality Prediction Model 
+# MLOps Bootcamp 
+## MLModel  : Air Quality Index Prediction Model 
 
 An end-to-end MLOps project: **AutoGluon** for modeling, **DVC** for the
 data/ML pipeline, **MLflow** for experiment tracking + a quality gate,
