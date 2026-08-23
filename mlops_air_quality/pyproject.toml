@@ -1,0 +1,27 @@
+[project]
+name = "mlops-air-quality"
+version = "1.0.0"
+description = "End-to-end MLOps project for air quality prediction"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "autogluon-tabular>=1.6.1",
+    "chandan-aiops>=1.5.5",
+    "docker>=7.2.0",
+    "dvc>=3.67.1",
+    "fastapi>=0.141.1",
+    "flaml[automl]>=2.6.0",
+    "gradio>=6.25.0",
+    "imblearn>=0.0",
+    "jinja2>=3.1.6",
+    "numpy>=2.4.6",
+    "pandas>=2.3.3",
+    "pandera>=0.32.1",
+    "scikit-learn>=1.9.0",
+    "streamlit>=1.62.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

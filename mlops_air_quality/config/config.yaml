@@ -1,0 +1,12 @@
+data:
+  raw: data/raw/data.csv
+  processed: data/processed/data.csv
+
+model:
+  path: artifacts/model.pkl
+
+reports:
+  path: reports
+
+logs:
+  path: logs/mlops.log

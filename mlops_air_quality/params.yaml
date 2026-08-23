@@ -1,0 +1,5 @@
+model:
+  time_budget: 300
+  metric: r2
+  task: regression
+  random_state: 42
